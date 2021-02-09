@@ -48,7 +48,7 @@ Download and run the `DSRegTool.ps1` script from this GitHub repo.
 - Testing MEX endpoints (for Federated domains)
 - Testing Internet Connectivity
 - Testing Device Registration Service
-- Test if the device exist on AAD.
+- Test if the device exist on AAD
 - Test if the device enabled on AAD.
 - Test if the device is not pending on AAD. 
 
