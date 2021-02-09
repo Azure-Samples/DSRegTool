@@ -1,57 +1,92 @@
-# Project Name
+---
+page_type: sample
+languages:
+- powershell
+products:
+- azure-active-directory
+DSRegTool PowerShell is a comprehensive tool that performs more than 50 different tests that help you to identify and fix the most common device registration issues for all join types (Hybrid Azure AD joined, Azure AD Joined and Azure AD Register).
+urlFragment: "DSRegTool"
+---
+# Device Registration Troubleshooter Tool
+Usually it is not so easy to troubleshoot device registration issues and it does take some time, but now, using Device Registration Troubleshooter tool it is not complex anymore :)
 
-(short, 1-3 sentenced, description of the project)
+DSRegTool PowerShell is a comprehensive tool that performs more than 30 different tests that help you to identify and fix the most common device registration issues for all join types (Hybrid Azure AD joined, Azure AD Joined and Azure AD Register).
 
-## Features
+## How to run the script
 
-This project framework provides the following features:
+Download and run the `DSRegTool.ps1` script from this GitHub repo. 
 
-* Feature 1
-* Feature 2
-* ...
+## What tests the script perform
 
-## Getting Started
+Download and run the `DSRegTool.ps1` script from this GitHub repo. 
 
-### Prerequisites
+### 1- Troubleshoot Azure AD Register
+- Testing OS version
+- Testing if the device is registered to AzureAD by the signed in user
+- Testing Internet Connectivity
+- Testing Device Registration Service
+- Testing if the device exist on AAD
+- Testing if the device is enabled on AAD 
 
-(ideally very short, if any)
+### 2- Troubleshoot Azure AD Join device
+- Testing OS version
+- Testing if the device joined to the local domain
+- Testing if the device is joined to AzureAD
+- Testing if you signed in user is a Built-in Administrator account
+- Testing if the signed in user has local admin permissions
+- Testing Internet Connectivity
+- Testing Device Registration Service
+- Testing if the device exist on AAD.
+- Testing if the device is enabled on AAD 
 
-- OS
-- Library version
-- ...
+### 3- Troubleshoot Hybrid Azure AD Join
+- Testing OS version
+- Testing if the device joined to the local domain
+- Testing if the device is joined to AzureAD
+- Testing Automatic-Device-Join task scheduler
+- Testing Domain Controller connectivity
+- Testing Service Connection Point (SCP) configuration for both client and domain sides
+- Testing if the device synced successfully to AAD (for Managed domains)
+- Testing MEX endpoints (for Federated domains)
+- Testing Internet Connectivity
+- Testing Device Registration Service
+- Test if the device exist on AAD.
+- Test if the device enabled on AAD.
+- Test if the device is not pending on AAD. 
 
-### Installation
+### 4- Verify Service Connection Point (SCP)
+- Testing client-side registry setting
+- Testing client-side registry configuration (tenantID, DomainName)
+- Testing Domain Controller connectivity
+- Testing Service Connection Point (SCP) on configuration partition
+- Testing Service Connection Point (SCP) configuration 
 
-(ideally very short)
+### 5- Verify the health status of the device
+- Checks OS version
+- Checks if the device joined to the local domain
+- Checks if the device is joined to AzureAD
+- Checks if the device hybrid, Azure AD Join or Azure AD Register
+- Checks the device certificate configuration.
+- Checks if the device exist on AAD.
+- Checks if the device enabled on AAD.
+- Checks if the device is not pending on AAD
+- Shows the health status for the device
+- Provides recommendations to fix unhealthy devices 
 
-- npm install [package name]
-- mvn install
-- ...
+### 6- Verify Primary Refresh Token (PRT)
+- Checks OS version
+- Checks if the device joined to the local domain
+- Testing if the device is Hybrid Azure AD joined
+- Testing if the device is Azure AD Joined
+- Testing Azure AD PRT (DJ++ or ADDJ)
+- Testing Enterprise PRT (DJ++)
+- Testing if the device is workplace joined
+- Testing the registry configuration (WPJ) 
 
-### Quickstart
-(Add steps to get up and running quickly)
+### 7- Collect the logs
 
-1. git clone [repository clone url]
-2. cd [respository name]
-3. ...
+- Shows logs collection steps 
+    
+    
+![Alt text](https://github.com/Azure-Samples/DSRegTool/blob/master/DSRegTool.png "DSRegTool")
 
-
-## Demo
-
-A demo app is included to show how to use the project.
-
-To run the demo, follow these steps:
-
-(Add steps to start up the demo)
-
-1.
-2.
-3.
-
-## Resources
-
-(Any additional resources or related projects)
-
-- Link to supporting information
-- Link to similar sample
-- ...
