@@ -4,7 +4,7 @@ languages:
 - powershell
 products:
 - azure-active-directory
-DSRegTool PowerShell is a comprehensive tool that performs more than 50 different tests that help you to identify and fix the most common device registration issues for all join types (Hybrid Azure AD joined, Azure AD Joined and Azure AD Register).
+description: "DSRegTool PowerShell is a comprehensive tool that performs more than 30 different tests that help you to identify and fix the most common device registration issues for all join types (Hybrid Azure AD joined, Azure AD Joined and Azure AD Register)."
 urlFragment: "DSRegTool"
 ---
 # Device Registration Troubleshooter Tool
