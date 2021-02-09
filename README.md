@@ -84,7 +84,8 @@ Download and run the `DSRegTool.ps1` script from this GitHub repo.
 ### 7- Collect the logs
 
 - Shows logs collection steps 
-    
-    
+
+## User experience
+
 ![Alt text](DSRegTool.png "DSRegTool")
 
