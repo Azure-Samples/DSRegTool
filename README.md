@@ -86,5 +86,5 @@ Download and run the `DSRegTool.ps1` script from this GitHub repo.
 - Shows logs collection steps 
     
     
-![Alt text](https://github.com/Azure-Samples/DSRegTool/blob/main/DSRegTool.png "DSRegTool")
+![Alt text](DSRegTool.png "DSRegTool")
 
