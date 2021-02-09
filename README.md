@@ -18,8 +18,6 @@ Download and run the `DSRegTool.ps1` script from this GitHub repo.
 
 ## What tests the script perform
 
-Download and run the `DSRegTool.ps1` script from this GitHub repo. 
-
 ### 1- Troubleshoot Azure AD Register
 - Testing OS version
 - Testing if the device is registered to AzureAD by the signed in user
