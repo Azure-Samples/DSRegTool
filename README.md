@@ -14,7 +14,7 @@ DSRegTool PowerShell is a comprehensive tool that performs more than 50 differen
 
 ## How to run the script
 
-Download and run the `DSRegTool.ps1` script from this GitHub repo. 
+Download and run the `DSRegTool.ps1` script from [this](https://github.com/Azure-Samples/DSRegTool) GitHub repo. 
 
 ## What tests the script perform
 
