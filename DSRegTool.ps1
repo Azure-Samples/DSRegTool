@@ -1,4 +1,4 @@
-<# 
+﻿<# 
  
 .SYNOPSIS
     DSRegTool V2.1 PowerShell script.
@@ -47,8 +47,7 @@ Function CheckePRT{
 }
 
 Function PSasAdmin{
-    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-    $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())    $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
 Function CheckPRT{
@@ -384,7 +383,7 @@ if ($WPJ -ne "YES"){
 
 }else{
     #The device is WPJ join
-    $TenantName = $DSReg | Select-String TenantName 
+    $TenantName = $DSReg | Select-String WorkplaceTenantName
     $TenantName =($TenantName.tostring() -split ":")[1].trim()
     $hostname = hostname
     Write-Host "Test passed:" $hostname "device is connected to Azure AD tenant that has the name of" $TenantName "as Azure AD Register device" -ForegroundColor Green -BackgroundColor Black
@@ -641,7 +640,7 @@ if ($AADJ -ne "YES"){
 
 }else{
     #The device is AAD join
-    $TenantName = $DSReg | Select-String TenantName 
+    $TenantName = $DSReg | Select-String TenantName | Select-Object -first 1
     $TenantName =($TenantName.tostring() -split ":")[1].trim()
     $hostname = hostname
     Write-Host "Test passed:" $hostname "device is joined to Azure AD tenant that has the name of" $TenantName -ForegroundColor Green -BackgroundColor Black
@@ -883,7 +882,7 @@ Function VerifySCP{
 
 Function LogsCollection{
     ''
-    Write-Host "1. Get Auth script from the link https://github.com/CSS-Windows/WindowsDiag/blob/master/ADS/AUTH/Auth.zip"
+    Write-Host "1. Get Auth script from the link https://github.com/CSS-Identity/DRS/blob/main/Auth/Auth.zip"
     ''
     Write-Host "2. Download the ZIP file to client and extract it"
     ''
@@ -1281,7 +1280,7 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
 Function NewFun{
 
                 #The device is hybrid Azure AD join
-                $TenantName = $DSReg | Select-String TenantName 
+                $TenantName = $DSReg | Select-String TenantName | Select-Object -first 1
                 $TenantName =($TenantName.tostring() -split ":")[1].trim()
                 $hostname = hostname
                 Write-Host $hostname "device is joined to Azure AD tenant that has the name of" $TenantName -ForegroundColor Green
@@ -1440,7 +1439,7 @@ Function NewFun{
 Function NewFunAAD{
 
                 #The device is Azure AD joined
-                $TenantName = $DSReg | Select-String TenantName 
+                $TenantName = $DSReg | Select-String TenantName | Select-Object -first 1
                 $TenantName =($TenantName.tostring() -split ":")[1].trim()
                 $hostname = hostname
                 Write-Host $hostname "device is joined to Azure AD tenant that has the name of" $TenantName -ForegroundColor Green
@@ -1680,7 +1679,7 @@ Function DJ++1{
 
             }else{
                 #The device is hybrid Azure AD join
-                $TenantName = $DSReg | Select-String TenantName 
+                $TenantName = $DSReg | Select-String TenantName | Select-Object -first 1
                 $TenantName =($TenantName.tostring() -split ":")[1].trim()
                 $hostname = hostname
                 Write-Host $hostname "device is joined to Azure AD tenant that has the name of" $TenantName -ForegroundColor Green
@@ -2306,7 +2305,7 @@ if ($AADJ -ne "YES"){
 
 }else{
     #The device is hybrid Azure AD join
-    $TenantName = $DSReg | Select-String TenantName 
+    $TenantName = $DSReg | Select-String TenantName | Select-Object -first 1
     $TenantName =($TenantName.tostring() -split ":")[1].trim()
     $hostname = hostname
     Write-Host "Test passed:" $hostname "device is joined to Azure AD tenant that has the name of" $TenantName -ForegroundColor Green -BackgroundColor Black
