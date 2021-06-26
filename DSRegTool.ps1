@@ -1,10 +1,10 @@
-<# 
+﻿<# 
  
 .SYNOPSIS
     DSRegTool V2.1 PowerShell script.
 
 .DESCRIPTION
-    Device Registration Troubleshooter Tool is a PowerShell script that troubleshhot device registration common issues.
+    Device Registration Troubleshooter Tool is a PowerShell script that troubleshoots device registration common issues.
 
 .AUTHOR:
     Mohammad Zmaili
@@ -47,8 +47,7 @@ Function CheckePRT{
 }
 
 Function PSasAdmin{
-    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-    $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())    $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
 Function CheckPRT{
@@ -442,7 +441,7 @@ if ($AADDevice.Enabled -eq $false){
 
 ''
 ''
-Write-Host "The device is connected to AAD as Azure AD Registered device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+Write-Host "The device is connected to AAD as Azure AD Registered device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
 ''
 ''
 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -699,7 +698,7 @@ if ($AADDevice.Enabled -eq $false){
 
 ''
 ''
-Write-Host "The device is connected to AAD as Azure AD joined device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+Write-Host "The device is connected to AAD as Azure AD joined device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
 ''
 ''
 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -1289,7 +1288,7 @@ Function NewFun{
                 ''
                 Write-Host "Checking Key provider..." -ForegroundColor Yellow
                 #Checking the KeyProvider:
-                $KeyProvider = $DSReg | Select-String KeyProvider
+                $KeyProvider = $DSReg | Select-String KeyProvider | Select-Object -first 1
                 $KeyProvider = ($KeyProvider.tostring() -split ":")[1].trim()
                 if (($KeyProvider -ne "Microsoft Platform Crypto Provider") -and ($KeyProvider -ne "Microsoft Software Key Storage Provider")){
                     Write-Host "The KeyProvider is not configured correctly." -ForegroundColor Red
@@ -1309,11 +1308,11 @@ Function NewFun{
                 # Check other values.
 
                 #Checking the certificate:
-                $DID = $DSReg | Select-String DeviceId
+                $DID = $DSReg | Select-String DeviceId | Select-Object -first 1
                 $DID = ($DID.ToString() -split ":")[1].Trim()
         
 
-                $DTP = $DSReg | Select-String Thumbprint
+                $DTP = $DSReg | Select-String Thumbprint | Select-Object -first 1
                 $DTP = ($DTP.ToString() -split ":")[1].Trim()
         
                 ''
@@ -1396,9 +1395,11 @@ Function NewFun{
 
         ''
         Write-Host "Checking dual state..." -ForegroundColor Yellow
+        $HAADJTID = $DSReg | Select-String TenantId | Select-Object -first 1
+        $WPJTID = $DSReg | Select-String WorkplaceTenantId | Select-Object -first 1
         $WPJ = $DSReg | Select-String WorkplaceJoined
         $WPJ = ($WPJ.tostring() -split ":")[1].trim()
-        if ($WPJ -eq "YES"){
+        if (($WPJ -eq "YES") -and ($HAADJTID -eq $WPJTID)){
             Write-Host "The device in dual state." -ForegroundColor Red
             ''
             Write-Host "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Azure AD registered state manually before enabling Hybrid Azure AD join by disconnecting the user from Access Work or School Account." -ForegroundColor Yellow
@@ -1408,28 +1409,28 @@ Function NewFun{
             ''
             ''
             exit
-        }else{
+        }elseif ($WPJ -ne "YES"){
             #Check if there is atoken inside the path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com
             if ((Get-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com -ErrorAction SilentlyContinue).PSPath){
                 Write-Host "The device in dual state." -ForegroundColor Red
                 ''
-                Write-Host "Recommended action: remove the regostry key 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\'" -ForegroundColor Yellow
+                Write-Host "Recommended action: remove the registry key 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\'" -ForegroundColor Yellow
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                 ''
                 ''
                 exit                
-            }else{
-                Write-Host "The device is not in dual state." -ForegroundColor Green
             }
+        }else{
+                Write-Host "The device is not in dual state." -ForegroundColor Green
         }
 
 
 
     ''
     ''
-    Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+    Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -1535,7 +1536,7 @@ Function NewFunAAD{
 
     ''
     ''
-    Write-Host "The device is connected successfully to AAD as Azure AD joined device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+    Write-Host "The device is connected successfully to AAD as Azure AD joined device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -1620,7 +1621,7 @@ Function NewFunWPJ{
 
     ''
     ''
-    Write-Host "The device is connected successfully to AAD as Azure AD registered device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+    Write-Host "The device is connected successfully to AAD as Azure AD registered device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -1816,7 +1817,7 @@ Function DJ++1{
 
     ''
     ''
-    Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+    Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -2387,9 +2388,11 @@ if (-not ($AltSec.StartsWith("X509:"))){
 
         ''
         Write-Host "Checking dual state..." -ForegroundColor Yellow
+        $HAADJTID = $DSReg | Select-String TenantId | Select-Object -first 1
+        $WPJTID = $DSReg | Select-String WorkplaceTenantId | Select-Object -first 1
         $WPJ = $DSReg | Select-String WorkplaceJoined
         $WPJ = ($WPJ.tostring() -split ":")[1].trim()
-        if ($WPJ -eq "YES"){
+        if (($WPJ -eq "YES") -and ($HAADJTID -eq $WPJTID)){
             Write-Host "The device in dual state." -ForegroundColor Red
             ''
             Write-Host "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Azure AD registered state manually before enabling Hybrid Azure AD join by disconnecting the user from Access Work or School Account." -ForegroundColor Yellow
@@ -2399,28 +2402,28 @@ if (-not ($AltSec.StartsWith("X509:"))){
             ''
             ''
             exit
-        }else{
+        }elseif ($WPJ -ne "YES"){
             #Check if there is atoken inside the path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com
             if ((Get-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com -ErrorAction SilentlyContinue).PSPath){
                 Write-Host "The device in dual state." -ForegroundColor Red
                 ''
-                Write-Host "Recommended action: remove the regostry key 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\'" -ForegroundColor Yellow
+                Write-Host "Recommended action: remove the registry key 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\'" -ForegroundColor Yellow
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                 ''
                 ''
                 exit                
-            }else{
-                Write-Host "Test passed: the device is not in dual state." -ForegroundColor Green -BackgroundColor Black
             }
+        }else{
+                Write-Host "The device is not in dual state." -ForegroundColor Green
         }
 
 
 
 ''
 ''
-Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
 ''
 ''
 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -2441,7 +2444,7 @@ cls
 Write-Host '        Device Registration Troubleshooter Tool          ' -ForegroundColor Green 
 '========================================================'
 ''
-Write-Host "Please provice any feedback, comment or suggestion" -ForegroundColor Yellow
+Write-Host "Please provide any feedback, comment or suggestion" -ForegroundColor Yellow
 Write-Host
 Write-Host "Enter (1) to troubleshoot Azure AD Register" -ForegroundColor Green
 ''
