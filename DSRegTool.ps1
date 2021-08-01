@@ -874,7 +874,7 @@ Function WPJTS{
 }#end WPJTS
 
 Function AADJ{
-    #Check PSAdmin
+    <##Check PSAdmin
     Write-Host ''
     Write-Host "Testing if PowerShell running with elevated privileges..." -ForegroundColor Yellow 
     Write-Log -Message "Testing if PowerShell running with elevated privileges..."
@@ -895,7 +895,7 @@ Function AADJ{
         Write-Host ''
         Write-Host ''
         exit
-    }
+    }#>
     #Check OS version:
     Write-Host ''
     Write-Host "Testing OS version..." -ForegroundColor Yellow
@@ -990,7 +990,9 @@ Function AADJ{
         Write-Host ''
         Write-Host "Testing if the signed in user has local admin permissions..." -ForegroundColor Yellow
         Write-Log -Message "Testing if the signed in user has local admin permissions..."
-        if (([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")){
+        $LocalAdminGroup=(whoami /groups | Select-String 'S-1-5-32-544')
+        #if (([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")){
+        if ($LocalAdminGroup){
             Write-Host "Test passed: the signed in user has local admin permissions" -ForegroundColor Green
             Write-Log -Message "Test passed: the signed in user has local admin permissions"
         }else{
