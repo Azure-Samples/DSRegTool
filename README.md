@@ -103,6 +103,83 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 ## User experience
 ![Alt text](/media/DSRegTool.png "DSRegTool")
 
+## Log collection Output File Reference:
+| File Name  | Description |
+| ------------- | ------------- |
+| dsregcmd-status.txt | Contains dsregcmd /status output |
+| dsregcmd-debug.txt | Contains dsregcmd /debug output under system context |
+| DeviceInfo.txt | Contains the following machine's information: OS version, Device Name, Object GUID, Distinguished Name and UserCertificate |
+| hosts.txt | Copy of machine's hosts file |
+| ipconfig-all.txt | Contains machine's IP address configuration |
+| Winver.txt | Contains Windows OS version |
+| IdentityStore.txt | Contains HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\IdentityStore registry value |
+| WPJ-info.txt | Contains HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD registry value |
+| CloudDomainJoin.txt | Contains HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CloudDomainJoin registry value |
+| WorkplaceJoin-windows.txt | Contains HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WorkplaceJoin registry value |
+| Winlogon-current-control-set.txt | Contains HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Winlogon registry value |
+| WorkplaceJoin-control.txt | Contains HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\WorkplaceJoin registry value |
+| Lsa.txt | Contains HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa registry value |
+| winInet-user.txt | Contains winHTTP configuration under logged on user context |
+| winInet-user-regkey.txt | Contains winInet registry value under logged on user context |
+| winHTTP.txt | Contains winHTTP configuration under system context |
+| winInet-system-regkey.txt | Contains winInet registry value under system context |
+| winInet-system.txt | Contains winInet configuration under system context |
+| TestDeviceRegConnectivity-user.txt | Contains the result of testing Device Registration endpoints connectivity under system context |
+| TestDeviceRegConnectivity-system.txt | Contains the result of testing Device Registration endpoints connectivity under system context |
+| Task-Scheduler.txt | Contains Task scheduler configuration |
+| tasklist.txt | Contains running tasks |
+| set.txt | Contains system environment values |
+| services-running.txt | Contains running services |
+| services-config.txt | Contains sc config |
+| SCP-config-partition.txt | Contains SCP from domain configuration partition |
+| SCP-client-side.txt | Contains SCP client-side registry value |
+| Schannel.txt | Contains Schannel registry value |
+| GPResult.htm | Contains Group Policy Result |
+| Patches.htm | Contains installed windows updates |
+| netstat-nao.txt | Contains of established network connections |
+| route-print.txt | Contains routing table |
+| Netsetup.log | Contains Netsetup debug logs |
+| netlogon.log | Contains Netlogon debug logs |
+| Netlogon.txt | Contains Netlogon registry value |
+| Microsoft-Windows-AAD-Operational.evtx | CloudAP plugin and AAD broker plugin operational logs |
+| Microsoft-Windows-AAD-Analytic.evtx | CloudAP plugin and AAD broker diagnostic logs |
+| Microsoft-Windows-User Device Registration-Admin.evtx | Device Registration administrative logs |
+| Microsoft-Windows-User Device Registration-Debug.evtx | Device Registration diagnostic logs |
+| Microsoft-Windows-Biometrics-Operational.evtx | Biometrics operational logs|
+| Microsoft-Windows-HelloForBusiness-Operational.evtx | Windows Hello for Business logs |
+| Microsoft-Windows-LiveId-Operational.evtx | Live ID operational logs |
+| Microsoft-Windows-Kerberos-Operational.evtx | Kerberos operational logs |
+| Microsoft-Windows-Shell-Core-Operational.evtx | Shell core operational logs |
+| Microsoft-Windows-WebAuthN-Operational.evtx | WebAuthN operational logs including FIDO key logs  |
+| Microsoft-Windows-WebAuth-Operational.evtx | WebAuth operational logs |
+| Microsoft-Windows-WMI-Activity-Operational.evtx | WMI activity operational logs |
+| Microsoft-Windows-Authentication-AuthenticationPolicyFailures-DomainController.evtx | Authentication Policy Failur logs |
+| Microsoft-Windows-Authentication-ProtectedUser-Client.evtx | Protected user failure client logs |
+| Microsoft-Windows-Authentication-ProtectedUserFailures-DomainController.evtx | Protected user failure authentication logs |
+| Microsoft-Windows-Authentication-ProtectedUserSuccesses-DomainController.evtx | Protected user successes authentication logs |
+| Microsoft-Windows-CAPI2-Operational.evtx | Certificate operational logs |
+| Microsoft-Windows-CertPoleEng-Operational.evtx | CertPoleEng operational logs |
+| Microsoft-Windows-Crypto-DPAPI-Operational.evtx | Crypto DPAPI operational logs |
+| Microsoft-Windows-GroupPolicy-Operational.evtx | Group policy operational logs |
+| Microsoft-Windows-IdCtrls-Operational.evtx | IdCtrls operational logs |
+| Microsoft-Windows-User Control Panel-Operational.evtx | Control panel operational logs |
+| System.evtx | Machine system event logs |
+| Application.evtx | Machine application event logs |
+| LSA.etl | contains LSA debug traces in binary format |
+| Netmon.etl | contains network trace |
+| WebAuth.etl | contains WebAuth debug traces in binary format |
+| Kerberos.etl | contains Kerberos debug traces in binary format |
+| Ntlm_CredSSP.etl | contains Ntlm_CredSSP debug traces in binary format |
+| AADExtention > Azure.ActiveDirectory.AADLoginForWindows | AADExtention logs |
+| AADExtention > AzuerVMInfo.txt | Contains Azure VM information |
+| AADExtention > AzureVMTenantID.txt | Contains Tenant ID that is associated with the Azure Subscription |
+| AADExtention > AzureVMAccessToken.txt | Contains Azure VM Access Token |
+| AADExtention > pas.windows.net.txt | contains connectivity result to pas.windows.net |
+| AADExtention > login.microsoftonline.com.txt | contains connectivity result to login.microsoftonline.com |
+| AADExtention > device.login.microsoftonline.com.txt | contains connectivity result to device.login.microsoftonline.com |
+| AADExtention > enterpriseregistration.windows.net.txt | contains connectivity result to enterpriseregistration.windows.net |
+| Log.log | Shows log collection verbose logs |
+| DSRegTool.log | Copy of DSRegTool log file |
 
 # Frequently asked questions
 ## Does this script change anything?
