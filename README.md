@@ -170,14 +170,14 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 | WebAuth.etl | contains WebAuth debug traces in binary format |
 | Kerberos.etl | contains Kerberos debug traces in binary format |
 | Ntlm_CredSSP.etl | contains Ntlm_CredSSP debug traces in binary format |
-| AADExtention > Azure.ActiveDirectory.AADLoginForWindows | AADExtention logs |
-| AADExtention > AzuerVMInfo.txt | Contains Azure VM information |
-| AADExtention > AzureVMTenantID.txt | Contains Tenant ID that is associated with the Azure Subscription |
-| AADExtention > AzureVMAccessToken.txt | Contains Azure VM Access Token |
-| AADExtention > pas.windows.net.txt | contains connectivity result to pas.windows.net |
-| AADExtention > login.microsoftonline.com.txt | contains connectivity result to login.microsoftonline.com |
-| AADExtention > device.login.microsoftonline.com.txt | contains connectivity result to device.login.microsoftonline.com |
-| AADExtention > enterpriseregistration.windows.net.txt | contains connectivity result to enterpriseregistration.windows.net |
+| AADExtention\ </br> Azure.ActiveDirectory.AADLoginForWindows | AADExtention logs |
+| AADExtention\ </br> AzuerVMInfo.txt | Contains Azure VM information |
+| AADExtention\ </br> AzureVMTenantID.txt | Contains Tenant ID that is associated with the Azure Subscription |
+| AADExtention\ </br> AzureVMAccessToken.txt | Contains Azure VM Access Token |
+| AADExtention\ </br> pas.windows.net.txt | contains connectivity result to pas.windows.net |
+| AADExtention\ </br> login.microsoftonline.com.txt | contains connectivity result to login.microsoftonline.com |
+| AADExtention\ </br> device.login.microsoftonline.com.txt | contains connectivity result to device.login.microsoftonline.com |
+| AADExtention\ </br> enterpriseregistration.windows.net.txt | contains connectivity result to enterpriseregistration.windows.net |
 | Log.log | Shows log collection verbose logs |
 | DSRegTool.log | Copy of DSRegTool log file |
 
