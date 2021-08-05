@@ -103,6 +103,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 ## User experience
 ![Alt text](/media/DSRegTool.png "DSRegTool")
 
+
 ## Log collection Output File Reference:
 | File Name  | Description |
 | ------------- | ------------- |
@@ -181,9 +182,14 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 | Log.log | Shows log collection verbose logs |
 | DSRegTool.log | Copy of DSRegTool log file |
 
-# Frequently asked questions
-## Does this script change anything?
-No. It just retrieves data.
+<br/>
 
-## Does this script require any PowerShell module to be installed?
+## Frequently asked questions
+### Does the script change anything?
+No, It just retrieves data.
+
+### Does the script require any PowerShell module to be installed?
 No, the script does not require any PowerShell module.
+
+### Will the tool fix the issue when it detects it?
+No, it identifies the issue and suggest recommended steps to fix it.
