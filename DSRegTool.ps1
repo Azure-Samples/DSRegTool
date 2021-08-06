@@ -1318,7 +1318,7 @@ Function getSCP{
 }
 
 Function ExportEventViewerLogs ($EventViewerLogs,$ExportPath){
-    ForEach ($EventViewerLog in $EventViewerLogs){		$EventViewerLogAfter = [regex]::Replace($EventViewerLog,"/","-")        #$EventViewerLogAfter=$EventViewerLogAfter.TrimStart("Microsoft-Windows-")		$ExportedFileName = $ExportPath +"\"+ $EventViewerLogAfter+".evtx"
+    ForEach ($EventViewerLog in $EventViewerLogs){		$EventViewerLogAfter = [regex]::Replace($EventViewerLog,"/","-")        $EventViewerLogAfter=($EventViewerLogAfter -split "Microsoft-Windows-")[1].trim()		$ExportedFileName = $ExportPath +"\"+ $EventViewerLogAfter+".evtx"
         (New-Object System.Diagnostics.Eventing.Reader.EventLogSession).ExportLogAndMessages($EventViewerLog,'LogName','*',$ExportedFileName)        Write-Log -Message "$EventViewerLogAfter event log exported successfully" -logfile "$global:LogsPath\Log.log"    }
 }
 
@@ -2713,7 +2713,7 @@ Function DJ++TS{
         Write-Host "Testing Automatic-Device-Join task scheduler..." -ForegroundColor Yellow
         Write-Log -Message "Testing Automatic-Device-Join task scheduler..."
         $TaskState=(Get-ScheduledTask -TaskName Automatic-Device-Join).State
-        if ($TaskState -ne 'Ready'){
+        if (($TaskState -ne 'Ready') -and ($TaskState -ne 'Bereit')){
             Write-Host "Test failed: Automatic-Device-Join task scheduler is not ready" -ForegroundColor Red
             Write-Log -Message "Test failed: Automatic-Device-Join task scheduler is not ready" -Level ERROR
             Write-Host ''
