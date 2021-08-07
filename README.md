@@ -114,7 +114,8 @@ No, the script does not require any PowerShell module.
 No, it identifies the issue and suggest recommended steps to fix it.
 
 ### What are the logs being collected by option #7?
-Here is log collection output file reference:
+Here is log collection output file reference:  
+
 | File Name  | Description |
 | ------------- | ------------- |
 | dsregcmd-status.txt | dsregcmd /status output |
