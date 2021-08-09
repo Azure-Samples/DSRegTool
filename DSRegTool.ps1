@@ -2369,7 +2369,9 @@ Function NewFun{
     Write-Host "Testing device dual state..." -ForegroundColor Yellow
     Write-Log -Message "Testing device dual state..."
     $HAADJTID = $DSReg | Select-String TenantId | Select-Object -first 1
+    $HAADJTID = ($HAADJTID.tostring() -split ":")[1].trim()
     $WPJTID = $DSReg | Select-String WorkplaceTenantId | Select-Object -first 1
+    $WPJTID = ($WPJTID.tostring() -split ":")[1].trim()
     $WPJ = $DSReg | Select-String WorkplaceJoined
     $WPJ = ($WPJ.tostring() -split ":")[1].trim()
     if (($WPJ -eq "YES") -and ($HAADJTID -eq $WPJTID)){
@@ -2399,11 +2401,11 @@ Function NewFun{
             Write-Log -Message "Script completed successfully."
             Write-Host ''
             Write-Host ''
-            exit                
-        }else{
-            Write-Host "Test passed: The device is not in dual state" -ForegroundColor Green
-            Write-Log -Message "Test passed: The device is not in dual state"
+            exit
         }
+    }else{
+        Write-Host "Test passed: The device is not in dual state" -ForegroundColor Green
+        Write-Log -Message "Test passed: The device is not in dual state"
     }
     Write-Host ''
     Write-Host ''
@@ -2921,18 +2923,23 @@ Function DJ++TS{
     CheckDeviceHealth $DID
 
     Write-Host ''
-    Write-Host "Testing device dual state..." -ForegroundColor Yellow
+    Write-Host "Testing device dual state...aa" -ForegroundColor Yellow
     Write-Log -Message "Testing device dual state..."
     $HAADJTID = $DSReg | Select-String TenantId | Select-Object -first 1
+    $HAADJTID = ($HAADJTID.tostring() -split ":")[1].trim()
     $WPJTID = $DSReg | Select-String WorkplaceTenantId | Select-Object -first 1
+    $WPJTID = ($WPJTID.tostring() -split ":")[1].trim()
     $WPJ = $DSReg | Select-String WorkplaceJoined
     $WPJ = ($WPJ.tostring() -split ":")[1].trim()
+    $HAADJTID
+    $WPJTID
+    $WPJ
     if (($WPJ -eq "YES") -and ($HAADJTID -eq $WPJTID)){
-        Write-Host "Test failed: The device is in dual state." -ForegroundColor Red
-        Write-Log -Message "Test failed: The device is in dual state." -Level WARN
+        Write-Host "Test failed: The device is in dual state" -ForegroundColor Red
+        Write-Log -Message "Test failed: The device is in dual state" -Level WARN
         Write-Host ''
-        Write-Host "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Azure AD registered state manually before enabling Hybrid Azure AD join by disconnecting the user from Access Work or School Account." -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Azure AD registered state manually before enabling Hybrid Azure AD join by disconnecting the user from Access Work or School Account."
+        Write-Host "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Azure AD registered state manually before enabling Hybrid Azure AD join by disconnecting the user from Access Work or School Account" -ForegroundColor Yellow
+        Write-Log -Message "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Azure AD registered state manually before enabling Hybrid Azure AD join by disconnecting the user from Access Work or School Account"
         Write-Host ''
         Write-Host ''
         Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2941,26 +2948,25 @@ Function DJ++TS{
         Write-Host ''
         exit
     }elseif ($WPJ -ne "YES"){
-        #Check if there is atoken inside the path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com
+        #Check if there is a token inside the path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com
         if ((Get-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com -ErrorAction SilentlyContinue).PSPath){
-            Write-Host "Test failed: The device is in dual state." -ForegroundColor Red
-            Write-Log -Message "Test failed: The device is in dual state." -Level WARN
+            Write-Host "Test failed: The device is in dual state" -ForegroundColor Red
+            Write-Log -Message "Test failed: The device is in dual state" -Level WARN
             Write-Host ''
-            Write-Host "Recommended action: Remove the registry key 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\'" -ForegroundColor Yellow
-            Write-Log -Message "Recommended action: Remove the registry key 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\'"
+            Write-Host "Recommended action: remove the registry key 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\'" -ForegroundColor Yellow
+            Write-Log -Message "Recommended action: remove the registry key 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\'"
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
             Write-Log -Message "Script completed successfully."
             Write-Host ''
             Write-Host ''
-            exit                
-        }else{
-            Write-Host "Test passed: The device is not in dual state" -ForegroundColor Green
-            Write-Log -Message "Test passed: The device is not in dual state"
+            exit
         }
+    }else{
+        Write-Host "Test passed: The device is not in dual state" -ForegroundColor Green
+        Write-Log -Message "Test passed: The device is not in dual state"
     }
-
     Write-Host ''
     Write-Host ''
     Write-Host "The device is connected to Azure AD as hybrid Azure AD joined device, and it is in healthy state." -ForegroundColor Green
