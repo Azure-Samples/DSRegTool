@@ -1,7 +1,7 @@
 ﻿<#
  
 .SYNOPSIS
-    DSRegTool V3.1 PowerShell script.
+    DSRegTool V3.5 PowerShell script.
 
 .DESCRIPTION
     Device Registration Troubleshooter Tool is a PowerShell script that troubleshoots device registration common issues.
@@ -33,7 +33,7 @@
 
 Function DSRegToolStart{
     $ErrorActionPreference= 'silentlycontinue'
-    Write-Host "DSRegTool 3.0 has started" -ForegroundColor Yellow
+    Write-Host "DSRegTool 3.5 has started" -ForegroundColor Yellow
     $msg="Device Name : " + (Get-Childitem env:computername).value
     Write-Host $msg  -ForegroundColor Yellow
     $msg="User Account: " + (whoami) +", UPN: "+$global:UserUPN
@@ -2873,23 +2873,118 @@ Function DJ++TS{
                 #MEX is accessible
                 Write-Host "Test passed: MEX URL '$global:UserRealmMEX' is accessible." -ForegroundColor Green
                 Write-Log -Message "Test passed: MEX URL '$global:UserRealmMEX' is accessible."
-                Write-Host ''
-                #count of windowstransport
+                ''
                 Write-Host "Testing windowstransport endpoints on your federation service..." -ForegroundColor Yellow
                 Write-Log -Message "Testing windowstransport endpoints on your federation service..."
-                if (([regex]::Matches($WebResponse.Content, "windowstransport" )).count -ge 1){
-                    #windowstransport is enabled
-                    Write-Host "Test passed: windowstransport endpoint is enabled on your federation service." -ForegroundColor Green
-                    Write-Log -Message "Test passed: windowstransport endpoint is enabled on your federation service."
+                $WebResponseXMLContent = [xml]$WebResponse.Content 
+                foreach ($Object in $WebResponseXMLContent.definitions.service.port) {
+                    if ($Object.EndpointReference.Identity.xmlns -eq "http://schemas.xmlsoap.org/ws/2006/02/addressingidentity"){
+                        $WTransportURL = $Object.EndpointReference.Address
+                    }
+                }
+                if($WTransportURL){
+                    Write-Host "Test passed: windowstransport endpoint is enabled on your federation service as the following:" -ForegroundColor Green
+                    $WTransportURL
+                    Write-Log -Message "Test passed: windowstransport endpoint is enabled on your federation service as the following: `n                                 $WTransportURL"
+                    #Testing if the federation service is ADFS:
+                    if ($WTransportURL.contains('/adfs/')){
+                        # Federation service is ADFS
+                        ''
+                        Write-Host "Testing device authentication against your federation service..." -ForegroundColor Yellow
+                        Write-Log -Message "Testing device authentication against your federation service..."
+                        if ($WTransportURL.contains('/2005/')){
+                            $Envelope = '<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:saml="urn:oasis:names:tc:SAML:1.0:assertion" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:wsa="http://www.w3.org/2005/08/addressing" xmlns:wssc="http://schemas.xmlsoap.org/ws/2005/02/sc" xmlns:wst="http://schemas.xmlsoap.org/ws/2005/02/trust"><s:Header><wsa:Action s:mustUnderstand="1">http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue</wsa:Action><wsa:To s:mustUnderstand="1">'+$WTransportURL+'</wsa:To><wsa:MessageID>urn:uuid:65925CF8-DE9C-43DA-B193-66575B649631</wsa:MessageID></s:Header><s:Body><wst:RequestSecurityToken Id="RST0"><wst:RequestType>http://schemas.xmlsoap.org/ws/2005/02/trust/Issue</wst:RequestType><wsp:AppliesTo><wsa:EndpointReference><wsa:Address>urn:federation:MicrosoftOnline</wsa:Address></wsa:EndpointReference></wsp:AppliesTo><wst:KeyType>http://schemas.xmlsoap.org/ws/2005/05/identity/NoProofKey</wst:KeyType></wst:RequestSecurityToken></s:Body></s:Envelope>'
+                        }elseif ($WTransportURL.contains('/13/')){
+                            $Envelope = '<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing" xmlns:u="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"><s:Header><a:Action s:mustUnderstand="1">http://docs.oasis-open.org/ws-sx/ws-trust/200512/RST/Issue</a:Action><a:MessageID>urn:uuid:DD679E17-7902-4EEA-AA45-071CFFE27502</a:MessageID><a:ReplyTo><a:Address>http://www.w3.org/2005/08/addressing/anonymous</a:Address></a:ReplyTo><a:To s:mustUnderstand="1">'+$WTransportURL+'</a:To></s:Header><s:Body><trust:RequestSecurityToken xmlns:trust="http://docs.oasis-open.org/ws-sx/ws-trust/200512"><wsp:AppliesTo xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy"><a:EndpointReference><a:Address>urn:federation:MicrosoftOnline</a:Address></a:EndpointReference></wsp:AppliesTo><trust:KeyType>http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer</trust:KeyType><trust:RequestType>http://docs.oasis-open.org/ws-sx/ws-trust/200512/Issue</trust:RequestType></trust:RequestSecurityToken></s:Body></s:Envelope>'
+                        }
+                        $Body = [String]::Format($Envelope, $WTransportURL, "urn:federation:MicrosoftOnline")
+                        #If there is no proxy, or FSName bypassed by proxy
+                        if ((($global:ProxyServer -eq "NoProxy") -or ($global:ProxyServer -eq "winInet")) -or ($global:FedProxy)){
+                            $PSScript = "Invoke-WebRequest "+$WTransportURL+" -Method Post -Body '"+$Body+"' -ContentType 'application/soap+xml; charset=utf-8' -UseDefaultCredentials -UseBasicParsing"
+                            $webresp = RunPScript -PSScript $PSScript
+                        }else{
+                            $PSScript = "Invoke-WebRequest "+$WTransportURL+" -Method Post -Body '"+$Body+"' -ContentType 'application/soap+xml; charset=utf-8' -UseDefaultCredentials -UseBasicParsing -Proxy "+$global:ProxyServer
+                            $webresp = RunPScript -PSScript $PSScript
+                        }
+                        $tokenXml = [xml]$webresp.Content
+                        $Token=$tokenXml.OuterXml
+                        if ($Token.Contains("FailedAuthentication")){
+                            Write-Host "Test failed: Device authentication failed against your federation service" -ForegroundColor Red
+                            Write-Log -Message "Test failed: Device authentication failed against your federation service" -Level ERROR
+                            Write-Host ''
+                            Write-Host "Recommended action: Make sure that your federation service allows non-interactive/device authenticaion." -ForegroundColor Yellow
+                            Write-Host "Important Note: if you force MFA, make sure to exclude it for non-interactive/device authenticaion." -ForegroundColor Yellow
+                            Write-Host "Important Note: if your windows 10 version is 1803 or above, device registration will fall back to sync join." -ForegroundColor Yellow
+                            Write-Log -Message "Recommended action: Make sure that your federation service allows non-interactive/device authenticaion.`n                                 Important Note: if you force MFA, make sure to exclude it for non-interactive/device authenticaion.`n                                 Important Note: if your windows 10 version is 1803 or above, device registration will fall back to sync join."
+                            SyncJoinCheck $true
+                        }else{
+                            Write-Host "Test passed: Device authenticated successfully." -ForegroundColor Green
+                            Write-Log -Message "Test passed: Device authenticated successfully."
+                            ''
+                            Write-Host "Testing Device registration claim rules..." -ForegroundColor Yellow
+                            Write-Log -Message "Testing device registration claim rules..."
+                            $fedjoinfailed = $false
+                            if ($Token.Contains("primarysid")){
+                                Write-Host "Test passed: 'primarysid' claim is configured." -ForegroundColor Green
+                                Write-Log -Message "Test passed: 'primarysid' claim is configured."
+                            }else{
+                                Write-Host "Test failed: 'primarysid' claim is NOT configured." -ForegroundColor Red
+                                Write-Log -Message "Test failed: 'primarysid' claim is NOT configured." -Level ERROR
+                                $fedjoinfailed = $true
+                            }
+                            if ($Token.Contains("accounttype")){
+                                Write-Host "Test passed: 'accounttype' claim is configured." -ForegroundColor Green
+                                Write-Log -Message "Test passed: 'accounttype' claim is configured."
+                            }else{
+                                Write-Host "Test failed: 'accounttype' claim is NOT configured." -ForegroundColor Red
+                                Write-Log -Message "Test failed: 'accounttype' claim is NOT configured."
+                                $fedjoinfailed = $true
+                            }
+                            if ($Token.Contains("ImmutableID")){
+                                Write-Host "Test passed: 'ImmutableID' claim is configured." -ForegroundColor Green
+                                Write-Log -Message "Test passed: 'ImmutableID' claim is configured."
+                            }else{
+                                Write-Host "Test failed: 'ImmutableID' claim is NOT configured." -ForegroundColor Red
+                                Write-Log -Message "Test failed: 'ImmutableID' claim is NOT configured." -Level ERROR
+                                $fedjoinfailed = $true
+                            }
+                            if ($Token.Contains("onpremobjectguid")){
+                                Write-Host "Test passed: 'onpremobjectguid' claim is configured." -ForegroundColor Green
+                                Write-Log -Message "Test passed: 'onpremobjectguid' claim is configured."
+                            }else{
+                                Write-Host "Test failed: 'onpremobjectguid' claim is NOT configured." -ForegroundColor Red
+                                Write-Log -Message "Test failed: 'onpremobjectguid' claim is NOT configured." -Level ERROR
+                                $fedjoinfailed = $true
+                            }
+
+                            if ($fedjoinfailed){
+                                ''
+                                Write-Host "Test failed: Device registration claim rules are NOT configured correctly." -ForegroundColor Red
+                                Write-Host "Recommended action: Make sure that claim rules are configured on 'Microsoft Office 365' Relying Part Trust. For more info, see https://docs.microsoft.com/en-us/azure/active-directory/devices/hybrid-azuread-join-manual" -ForegroundColor Yellow
+                                Write-Host "Important Note: if your windows 10 version is 1803 or above, device registration will fall back to sync join." -ForegroundColor Yellow
+                                Write-Log -Message "Test failed: Device registration claim rules are NOT configured correctly." -Level ERROR
+                                Write-Log -Message "Recommended action: Make sure that claim rules are configured on 'Microsoft Office 365' Relying Part Trust. For more info, see https://docs.microsoft.com/en-us/azure/active-directory/devices/hybrid-azuread-join-manual `n                                 Important Note: if your windows 10 version is 1803 or above, device registration will fall back to sync join." -Level WARN
+                                SyncJoinCheck $true
+                            }else{
+                                ''
+                                Write-Host "Test passed: Device registration claim rules are configured correctly." -ForegroundColor Green
+                                Write-Log -Message "Test passed: Device registration claim rules are configured correctly."
+                            }
+
+                        }
+                    }
+    
                 }else{
                     Write-Host "Test failed: windowstransport endpoints are disabled on your federation service" -ForegroundColor Red
                     Write-Log -Message "Test failed: windowstransport endpoints are disabled on your federation service" -Level ERROR
                     Write-Host ''
                     Write-Host "Recommended action: Make sure that windowstransport endpoints are enabled on your federation service." -ForegroundColor Yellow
                     Write-Host "Important Note: if your windows 10 version is 1803 or above, device registration will fall back to sync join." -ForegroundColor Yellow
-                    Write-Log -Message "Recommended action: Make sure that windowstransport endpoints are enabled on your federation service.`n                                 Important Note: if your windows 10 version is 1803 or above, device registration will fall back to sync join."
+                    Write-Log -Message "Recommended action: Make sure that windowstransport endpoints are enabled on your federation service. `n                                 Important Note: if your windows 10 version is 1803 or above, device registration will fall back to sync join."
                     SyncJoinCheck $true
                 }
+
+                ###
             }
 
         }
@@ -3023,7 +3118,7 @@ if($Error[0].Exception.Message -ne $null){
     Write-Host ''
 }
 Add-Content ".\DSRegTool.log" -Value "==========================================================" -ErrorAction SilentlyContinue
-Write-Log -Message "DSRegTool 3.0 has started"
+Write-Log -Message "DSRegTool 3.5 has started"
 $msg="Device Name : " + (Get-Childitem env:computername).value
 Write-Log -Message $msg
 
@@ -3107,42 +3202,42 @@ if($Num -eq '1'){
     Write-Host ''
 }
 # SIG # Begin signature block
-# MIIjkgYJKoZIhvcNAQcCoIIjgzCCI38CAQExDzANBglghkgBZQMEAgEFADB5Bgor
+# MIIjlAYJKoZIhvcNAQcCoIIjhTCCI4ECAQExDzANBglghkgBZQMEAgEFADB5Bgor
 # BgEEAYI3AgEEoGswaTA0BgorBgEEAYI3AgEeMCYCAwEAAAQQH8w7YFlLCE63JNLG
-# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCAzZ3rTPDIVqk0+
-# O0t9hmPjsbePRXagGfFgny1RCMVVp6CCDYEwggX/MIID56ADAgECAhMzAAAB32vw
-# LpKnSrTQAAAAAAHfMA0GCSqGSIb3DQEBCwUAMH4xCzAJBgNVBAYTAlVTMRMwEQYD
+# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCAOiFg8CIERbfUS
+# RBHD/ZmHpfeUHxIWInfvOLt4cBoMK6CCDYEwggX/MIID56ADAgECAhMzAAACUosz
+# qviV8znbAAAAAAJSMA0GCSqGSIb3DQEBCwUAMH4xCzAJBgNVBAYTAlVTMRMwEQYD
 # VQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNy
 # b3NvZnQgQ29ycG9yYXRpb24xKDAmBgNVBAMTH01pY3Jvc29mdCBDb2RlIFNpZ25p
-# bmcgUENBIDIwMTEwHhcNMjAxMjE1MjEzMTQ1WhcNMjExMjAyMjEzMTQ1WjB0MQsw
+# bmcgUENBIDIwMTEwHhcNMjEwOTAyMTgzMjU5WhcNMjIwOTAxMTgzMjU5WjB0MQsw
 # CQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9u
 # ZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMR4wHAYDVQQDExVNaWNy
 # b3NvZnQgQ29ycG9yYXRpb24wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIB
-# AQC2uxlZEACjqfHkuFyoCwfL25ofI9DZWKt4wEj3JBQ48GPt1UsDv834CcoUUPMn
-# s/6CtPoaQ4Thy/kbOOg/zJAnrJeiMQqRe2Lsdb/NSI2gXXX9lad1/yPUDOXo4GNw
-# PjXq1JZi+HZV91bUr6ZjzePj1g+bepsqd/HC1XScj0fT3aAxLRykJSzExEBmU9eS
-# yuOwUuq+CriudQtWGMdJU650v/KmzfM46Y6lo/MCnnpvz3zEL7PMdUdwqj/nYhGG
-# 3UVILxX7tAdMbz7LN+6WOIpT1A41rwaoOVnv+8Ua94HwhjZmu1S73yeV7RZZNxoh
-# EegJi9YYssXa7UZUUkCCA+KnAgMBAAGjggF+MIIBejAfBgNVHSUEGDAWBgorBgEE
-# AYI3TAgBBggrBgEFBQcDAzAdBgNVHQ4EFgQUOPbML8IdkNGtCfMmVPtvI6VZ8+Mw
+# AQDQ5M+Ps/X7BNuv5B/0I6uoDwj0NJOo1KrVQqO7ggRXccklyTrWL4xMShjIou2I
+# sbYnF67wXzVAq5Om4oe+LfzSDOzjcb6ms00gBo0OQaqwQ1BijyJ7NvDf80I1fW9O
+# L76Kt0Wpc2zrGhzcHdb7upPrvxvSNNUvxK3sgw7YTt31410vpEp8yfBEl/hd8ZzA
+# v47DCgJ5j1zm295s1RVZHNp6MoiQFVOECm4AwK2l28i+YER1JO4IplTH44uvzX9o
+# RnJHaMvWzZEpozPy4jNO2DDqbcNs4zh7AWMhE1PWFVA+CHI/En5nASvCvLmuR/t8
+# q4bc8XR8QIZJQSp+2U6m2ldNAgMBAAGjggF+MIIBejAfBgNVHSUEGDAWBgorBgEE
+# AYI3TAgBBggrBgEFBQcDAzAdBgNVHQ4EFgQUNZJaEUGL2Guwt7ZOAu4efEYXedEw
 # UAYDVR0RBEkwR6RFMEMxKTAnBgNVBAsTIE1pY3Jvc29mdCBPcGVyYXRpb25zIFB1
-# ZXJ0byBSaWNvMRYwFAYDVQQFEw0yMzAwMTIrNDYzMDA5MB8GA1UdIwQYMBaAFEhu
+# ZXJ0byBSaWNvMRYwFAYDVQQFEw0yMzAwMTIrNDY3NTk3MB8GA1UdIwQYMBaAFEhu
 # ZOVQBdOCqhc3NyK1bajKdQKVMFQGA1UdHwRNMEswSaBHoEWGQ2h0dHA6Ly93d3cu
 # bWljcm9zb2Z0LmNvbS9wa2lvcHMvY3JsL01pY0NvZFNpZ1BDQTIwMTFfMjAxMS0w
 # Ny0wOC5jcmwwYQYIKwYBBQUHAQEEVTBTMFEGCCsGAQUFBzAChkVodHRwOi8vd3d3
 # Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvZFNpZ1BDQTIwMTFfMjAx
-# MS0wNy0wOC5jcnQwDAYDVR0TAQH/BAIwADANBgkqhkiG9w0BAQsFAAOCAgEAnnqH
-# tDyYUFaVAkvAK0eqq6nhoL95SZQu3RnpZ7tdQ89QR3++7A+4hrr7V4xxmkB5BObS
-# 0YK+MALE02atjwWgPdpYQ68WdLGroJZHkbZdgERG+7tETFl3aKF4KpoSaGOskZXp
-# TPnCaMo2PXoAMVMGpsQEQswimZq3IQ3nRQfBlJ0PoMMcN/+Pks8ZTL1BoPYsJpok
-# t6cql59q6CypZYIwgyJ892HpttybHKg1ZtQLUlSXccRMlugPgEcNZJagPEgPYni4
-# b11snjRAgf0dyQ0zI9aLXqTxWUU5pCIFiPT0b2wsxzRqCtyGqpkGM8P9GazO8eao
-# mVItCYBcJSByBx/pS0cSYwBBHAZxJODUqxSXoSGDvmTfqUJXntnWkL4okok1FiCD
-# Z4jpyXOQunb6egIXvkgQ7jb2uO26Ow0m8RwleDvhOMrnHsupiOPbozKroSa6paFt
-# VSh89abUSooR8QdZciemmoFhcWkEwFg4spzvYNP4nIs193261WyTaRMZoceGun7G
-# CT2Rl653uUj+F+g94c63AhzSq4khdL4HlFIP2ePv29smfUnHtGq6yYFDLnT0q/Y+
-# Di3jwloF8EWkkHRtSuXlFUbTmwr/lDDgbpZiKhLS7CBTDj32I0L5i532+uHczw82
-# oZDmYmYmIUSMbZOgS65h797rj5JJ6OkeEUJoAVwwggd6MIIFYqADAgECAgphDpDS
+# MS0wNy0wOC5jcnQwDAYDVR0TAQH/BAIwADANBgkqhkiG9w0BAQsFAAOCAgEAFkk3
+# uSxkTEBh1NtAl7BivIEsAWdgX1qZ+EdZMYbQKasY6IhSLXRMxF1B3OKdR9K/kccp
+# kvNcGl8D7YyYS4mhCUMBR+VLrg3f8PUj38A9V5aiY2/Jok7WZFOAmjPRNNGnyeg7
+# l0lTiThFqE+2aOs6+heegqAdelGgNJKRHLWRuhGKuLIw5lkgx9Ky+QvZrn/Ddi8u
+# TIgWKp+MGG8xY6PBvvjgt9jQShlnPrZ3UY8Bvwy6rynhXBaV0V0TTL0gEx7eh/K1
+# o8Miaru6s/7FyqOLeUS4vTHh9TgBL5DtxCYurXbSBVtL1Fj44+Od/6cmC9mmvrti
+# yG709Y3Rd3YdJj2f3GJq7Y7KdWq0QYhatKhBeg4fxjhg0yut2g6aM1mxjNPrE48z
+# 6HWCNGu9gMK5ZudldRw4a45Z06Aoktof0CqOyTErvq0YjoE4Xpa0+87T/PVUXNqf
+# 7Y+qSU7+9LtLQuMYR4w3cSPjuNusvLf9gBnch5RqM7kaDtYWDgLyB42EfsxeMqwK
+# WwA+TVi0HrWRqfSx2olbE56hJcEkMjOSKz3sRuupFCX3UroyYf52L+2iVTrda8XW
+# esPG62Mnn3T8AuLfzeJFuAbfOSERx7IFZO92UPoXE1uEjL5skl1yTZB3MubgOA4F
+# 8KoRNhviFAEST+nG8c8uIsbZeb08SeYQMqjVEmkwggd6MIIFYqADAgECAgphDpDS
 # AAAAAAADMA0GCSqGSIb3DQEBCwUAMIGIMQswCQYDVQQGEwJVUzETMBEGA1UECBMK
 # V2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0
 # IENvcnBvcmF0aW9uMTIwMAYDVQQDEylNaWNyb3NvZnQgUm9vdCBDZXJ0aWZpY2F0
@@ -3182,119 +3277,119 @@ if($Num -eq '1'){
 # xw4o7t5lL+yX9qFcltgA1qFGvVnzl6UJS0gQmYAf0AApxbGbpT9Fdx41xtKiop96
 # eiL6SJUfq/tHI4D1nvi/a7dLl+LrdXga7Oo3mXkYS//WsyNodeav+vyL6wuA6mk7
 # r/ww7QRMjt/fdW1jkT3RnVZOT7+AVyKheBEyIXrvQQqxP/uozKRdwaGIm1dxVk5I
-# RcBCyZt2WwqASGv9eZ/BvW1taslScxMNelDNMYIVZzCCFWMCAQEwgZUwfjELMAkG
+# RcBCyZt2WwqASGv9eZ/BvW1taslScxMNelDNMYIVaTCCFWUCAQEwgZUwfjELMAkG
 # A1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQx
 # HjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEoMCYGA1UEAxMfTWljcm9z
-# b2Z0IENvZGUgU2lnbmluZyBQQ0EgMjAxMQITMwAAAd9r8C6Sp0q00AAAAAAB3zAN
+# b2Z0IENvZGUgU2lnbmluZyBQQ0EgMjAxMQITMwAAAlKLM6r4lfM52wAAAAACUjAN
 # BglghkgBZQMEAgEFAKCBsDAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgor
-# BgEEAYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAvBgkqhkiG9w0BCQQxIgQgPl1G1PL1
-# cvaRW/9BPA9QzmCX9oaAFQUef+PL/8yKHRAwRAYKKwYBBAGCNwIBDDE2MDSgFIAS
+# BgEEAYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAvBgkqhkiG9w0BCQQxIgQg6O90ZJPi
+# TomQ6MHVU2aY2RvB9FFWboIvkdsntw/EmUQwRAYKKwYBBAGCNwIBDDE2MDSgFIAS
 # AE0AaQBjAHIAbwBzAG8AZgB0oRyAGmh0dHBzOi8vd3d3dy5taWNyb3NvZnQuY29t
-# MA0GCSqGSIb3DQEBAQUABIIBABcF7r3GPtuPdEypvLGvGEUyOwxhLVIsOxIKG5Ns
-# lkRICvcmjH+utSzdjvZs5/acCPQiAUGUoDy5quRkL3pyrqMk+JXvlrdgIIsvmpJ9
-# KBZX1cOo7zh1odRVacw1IkXPafMQbVyx49rQfwmh2Ca53cym017reKyhCOw5mxUF
-# jrXX4GhZi4zpg0GQAZQueePSAoWrriDshq0qMsLFbO9p+e9oaSIgX47HKVbu7KrP
-# 2qZDygSaeFElRquq8Ba44BCubdYvGNWCiW0mJbzrlLWErb03rjicRF77UVeItr/7
-# 2GU+FKoxmvZy6SQ63EJLk0IpAMOyXZn6urrXywKHSDsd5vmhghLvMIIS6wYKKwYB
-# BAGCNwMDATGCEtswghLXBgkqhkiG9w0BBwKgghLIMIISxAIBAzEPMA0GCWCGSAFl
-# AwQCAQUAMIIBVAYLKoZIhvcNAQkQAQSgggFDBIIBPzCCATsCAQEGCisGAQQBhFkK
-# AwEwMTANBglghkgBZQMEAgEFAAQglSJxD+D1BMRKqoN/9HEutfCiRv3QKIRtCRox
-# 1xptFewCBmF5zefAgRgSMjAyMTEwMjgwNzM1MDkuNDlaMASAAgH0oIHUpIHRMIHO
-# MQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVk
-# bW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSkwJwYDVQQLEyBN
-# aWNyb3NvZnQgT3BlcmF0aW9ucyBQdWVydG8gUmljbzEmMCQGA1UECxMdVGhhbGVz
-# IFRTUyBFU046Rjg3QS1FMzc0LUQ3QjkxJTAjBgNVBAMTHE1pY3Jvc29mdCBUaW1l
-# LVN0YW1wIFNlcnZpY2Wggg5DMIIE9TCCA92gAwIBAgITMwAAAWOLZMbJhZZldgAA
-# AAABYzANBgkqhkiG9w0BAQsFADB8MQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2Fz
-# aGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENv
-# cnBvcmF0aW9uMSYwJAYDVQQDEx1NaWNyb3NvZnQgVGltZS1TdGFtcCBQQ0EgMjAx
-# MDAeFw0yMTAxMTQxOTAyMjNaFw0yMjA0MTExOTAyMjNaMIHOMQswCQYDVQQGEwJV
-# UzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UE
-# ChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSkwJwYDVQQLEyBNaWNyb3NvZnQgT3Bl
-# cmF0aW9ucyBQdWVydG8gUmljbzEmMCQGA1UECxMdVGhhbGVzIFRTUyBFU046Rjg3
-# QS1FMzc0LUQ3QjkxJTAjBgNVBAMTHE1pY3Jvc29mdCBUaW1lLVN0YW1wIFNlcnZp
-# Y2UwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCtcRf2Ep3JdGKS/6jd
-# hZ38I39IvGvguBC8+VGctyTlOeFx/qx79cty4CmBrt8K7TUhGOB8+c+j0ZRCb7+2
-# itrZu1rxUnrO4ixYUNPA1eIVcecxepZebjdrYtnyTWeiQ4zElWLmP8GmHTRaOzeJ
-# fMfO/9UkyKG9zw4mqgKBGdYRG5rka+OBCj/90Q4KPwGNKNNcwBeJOR78q389Nxmi
-# SGehCCIG2GxOhNi19nCWfet2jWD2S2FWzZ074ju6dnhh7WgJJ9PEK81vac9Whgk1
-# JQy0VC5zIkFSzYoGlNb/Dk87+2pQCJ05UXxS7zyFdCSdkj6vsFS8TxoYlbMBK1/f
-# P7M1AgMBAAGjggEbMIIBFzAdBgNVHQ4EFgQUCTXK8XZyZ+4/MVqfRseQPtffPSkw
-# HwYDVR0jBBgwFoAU1WM6XIoxkPNDe3xGG8UzaFqFbVUwVgYDVR0fBE8wTTBLoEmg
-# R4ZFaHR0cDovL2NybC5taWNyb3NvZnQuY29tL3BraS9jcmwvcHJvZHVjdHMvTWlj
-# VGltU3RhUENBXzIwMTAtMDctMDEuY3JsMFoGCCsGAQUFBwEBBE4wTDBKBggrBgEF
-# BQcwAoY+aHR0cDovL3d3dy5taWNyb3NvZnQuY29tL3BraS9jZXJ0cy9NaWNUaW1T
-# dGFQQ0FfMjAxMC0wNy0wMS5jcnQwDAYDVR0TAQH/BAIwADATBgNVHSUEDDAKBggr
-# BgEFBQcDCDANBgkqhkiG9w0BAQsFAAOCAQEAAohBggfXjuJTzo4yAmH7E6mpvSKn
-# UbTI9tFAQVS4bn7z/cb5aCPC2fcDj6uLAqCUnYTC2sFFmXeu7xZTP4gT/u15KtdP
-# U2nkEhODXPbnjNeX5RL2qOGbcxqFk3MaQvmpWGNJFRiI+ksQUsZwpKGXrE+OFlSE
-# wUC/+Nz5h8VQBQ9AtXA882uZ79Qkog752eKjcaT+mn/SGHymyQeGycQaudhWVUKk
-# eHQOjWux+LE4YdQGP6mHOpM5kqYVLxMwqucT2fPk5bKDTWWM+kwEeqp3n09g/9w7
-# J+15jvsDYyIugBFkCR2qsAe0eTlju0Ce6dO0Zf+E75DTM72ZfAQUn1+2IzCCBnEw
-# ggRZoAMCAQICCmEJgSoAAAAAAAIwDQYJKoZIhvcNAQELBQAwgYgxCzAJBgNVBAYT
-# AlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYD
-# VQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xMjAwBgNVBAMTKU1pY3Jvc29mdCBS
-# b290IENlcnRpZmljYXRlIEF1dGhvcml0eSAyMDEwMB4XDTEwMDcwMTIxMzY1NVoX
-# DTI1MDcwMTIxNDY1NVowfDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0
-# b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3Jh
-# dGlvbjEmMCQGA1UEAxMdTWljcm9zb2Z0IFRpbWUtU3RhbXAgUENBIDIwMTAwggEi
-# MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCpHQ28dxGKOiDs/BOX9fp/aZRr
-# dFQQ1aUKAIKF++18aEssX8XD5WHCdrc+Zitb8BVTJwQxH0EbGpUdzgkTjnxhMFmx
-# MEQP8WCIhFRDDNdNuDgIs0Ldk6zWczBXJoKjRQ3Q6vVHgc2/JGAyWGBG8lhHhjKE
-# HnRhZ5FfgVSxz5NMksHEpl3RYRNuKMYa+YaAu99h/EbBJx0kZxJyGiGKr0tkiVBi
-# sV39dx898Fd1rL2KQk1AUdEPnAY+Z3/1ZsADlkR+79BL/W7lmsqxqPJ6Kgox8NpO
-# BpG2iAg16HgcsOmZzTznL0S6p/TcZL2kAcEgCZN4zfy8wMlEXV4WnAEFTyJNAgMB
-# AAGjggHmMIIB4jAQBgkrBgEEAYI3FQEEAwIBADAdBgNVHQ4EFgQU1WM6XIoxkPND
-# e3xGG8UzaFqFbVUwGQYJKwYBBAGCNxQCBAweCgBTAHUAYgBDAEEwCwYDVR0PBAQD
-# AgGGMA8GA1UdEwEB/wQFMAMBAf8wHwYDVR0jBBgwFoAU1fZWy4/oolxiaNE9lJBb
-# 186aGMQwVgYDVR0fBE8wTTBLoEmgR4ZFaHR0cDovL2NybC5taWNyb3NvZnQuY29t
-# L3BraS9jcmwvcHJvZHVjdHMvTWljUm9vQ2VyQXV0XzIwMTAtMDYtMjMuY3JsMFoG
-# CCsGAQUFBwEBBE4wTDBKBggrBgEFBQcwAoY+aHR0cDovL3d3dy5taWNyb3NvZnQu
-# Y29tL3BraS9jZXJ0cy9NaWNSb29DZXJBdXRfMjAxMC0wNi0yMy5jcnQwgaAGA1Ud
-# IAEB/wSBlTCBkjCBjwYJKwYBBAGCNy4DMIGBMD0GCCsGAQUFBwIBFjFodHRwOi8v
-# d3d3Lm1pY3Jvc29mdC5jb20vUEtJL2RvY3MvQ1BTL2RlZmF1bHQuaHRtMEAGCCsG
-# AQUFBwICMDQeMiAdAEwAZQBnAGEAbABfAFAAbwBsAGkAYwB5AF8AUwB0AGEAdABl
-# AG0AZQBuAHQALiAdMA0GCSqGSIb3DQEBCwUAA4ICAQAH5ohRDeLG4Jg/gXEDPZ2j
-# oSFvs+umzPUxvs8F4qn++ldtGTCzwsVmyWrf9efweL3HqJ4l4/m87WtUVwgrUYJE
-# Evu5U4zM9GASinbMQEBBm9xcF/9c+V4XNZgkVkt070IQyK+/f8Z/8jd9Wj8c8pl5
-# SpFSAK84Dxf1L3mBZdmptWvkx872ynoAb0swRCQiPM/tA6WWj1kpvLb9BOFwnzJK
-# J/1Vry/+tuWOM7tiX5rbV0Dp8c6ZZpCM/2pif93FSguRJuI57BlKcWOdeyFtw5yj
-# ojz6f32WapB4pm3S4Zz5Hfw42JT0xqUKloakvZ4argRCg7i1gJsiOCC1JeVk7Pf0
-# v35jWSUPei45V3aicaoGig+JFrphpxHLmtgOR5qAxdDNp9DvfYPw4TtxCd9ddJgi
-# CGHasFAeb73x4QDf5zEHpJM692VHeOj4qEir995yfmFrb3epgcunCaw5u+zGy9iC
-# tHLNHfS4hQEegPsbiSpUObJb2sgNVZl6h3M7COaYLeqN4DMuEin1wC9UJyH3yKxO
-# 2ii4sanblrKnQqLJzxlBTeCG+SqaoxFmMNO7dDJL32N79ZmKLxvHIa9Zta7cRDyX
-# UHHXodLFVeNp3lfB0d4wwP3M5k37Db9dT+mdHhk4L7zPWAUu7w2gUDXa7wknHNWz
-# fjUeCLraNtvTX4/edIhJEqGCAtEwggI6AgEBMIH8oYHUpIHRMIHOMQswCQYDVQQG
-# EwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwG
-# A1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSkwJwYDVQQLEyBNaWNyb3NvZnQg
-# T3BlcmF0aW9ucyBQdWVydG8gUmljbzEmMCQGA1UECxMdVGhhbGVzIFRTUyBFU046
-# Rjg3QS1FMzc0LUQ3QjkxJTAjBgNVBAMTHE1pY3Jvc29mdCBUaW1lLVN0YW1wIFNl
-# cnZpY2WiIwoBATAHBgUrDgMCGgMVAO0sYB7dSd0qk00qsy3KzBmUAWHvoIGDMIGA
-# pH4wfDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcT
-# B1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEmMCQGA1UE
-# AxMdTWljcm9zb2Z0IFRpbWUtU3RhbXAgUENBIDIwMTAwDQYJKoZIhvcNAQEFBQAC
-# BQDlJExnMCIYDzIwMjExMDI4MDIwODM5WhgPMjAyMTEwMjkwMjA4MzlaMHYwPAYK
-# KwYBBAGEWQoEATEuMCwwCgIFAOUkTGcCAQAwCQIBAAIBYQIB/zAHAgEAAgIQ6DAK
-# AgUA5SWd5wIBADA2BgorBgEEAYRZCgQCMSgwJjAMBgorBgEEAYRZCgMCoAowCAIB
-# AAIDB6EgoQowCAIBAAIDAYagMA0GCSqGSIb3DQEBBQUAA4GBAGHRB9n5qiKG4pao
-# +x80yR2KJJ8ntlqGmfgRoN1s7wbeAxYdLHWEETHsvvlLs3SAmNblFLVQap7KhPuJ
-# HB9m4twNsRD1GOWXzXGvE8BFfmjuiMhT8YxhLu40xh7KAbhldaiWWYVZ2NsDyLL3
-# mUnvnQ1n7cCfvQDRXp/bMu0VOxJ0MYIDDTCCAwkCAQEwgZMwfDELMAkGA1UEBhMC
+# MA0GCSqGSIb3DQEBAQUABIIBACRi8PcFB61ItrBAx0dRyCa9yJTSbVv9IdZmKQuR
+# cglU+F+Haqnp3sCyAbcneLesgoWhqv+3pvSV9gSTnOI5yI1n6Xh32mA29DL+aQFr
+# vqGhNi6eNL8tMVHUsGEpIGK3WoOH6EuDVAsi97qo+SOB16KZxy8i4MLYEEwZBq49
+# ZbYAHeNWGsPuYfEi7uOFaEjxMLMnf6b95QIADams/JPQ2DD4W32VBkR08/Eez1J3
+# IVVASatKcnKcbg08ekOAA9uwzYSlXAVRkO5lbDJC4Q26y44OrSQS08K4M0NgLpei
+# x26dfEZ6LgsR0qY9hJDSDXPfwkuY0y7LNs/1iMFHVgM7pZ+hghLxMIIS7QYKKwYB
+# BAGCNwMDATGCEt0wghLZBgkqhkiG9w0BBwKgghLKMIISxgIBAzEPMA0GCWCGSAFl
+# AwQCAQUAMIIBVQYLKoZIhvcNAQkQAQSgggFEBIIBQDCCATwCAQEGCisGAQQBhFkK
+# AwEwMTANBglghkgBZQMEAgEFAAQgpyTecDasbzTaxvyHsDgm4EGheMCRu0q2lQ5b
+# panhQcgCBmGT768bGhgTMjAyMTExMTgxNDAwMTAuMjI3WjAEgAIB9KCB1KSB0TCB
+# zjELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1Jl
+# ZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEpMCcGA1UECxMg
+# TWljcm9zb2Z0IE9wZXJhdGlvbnMgUHVlcnRvIFJpY28xJjAkBgNVBAsTHVRoYWxl
+# cyBUU1MgRVNOOjBBNTYtRTMyOS00RDREMSUwIwYDVQQDExxNaWNyb3NvZnQgVGlt
+# ZS1TdGFtcCBTZXJ2aWNloIIORDCCBPUwggPdoAMCAQICEzMAAAFbfLC6NGc3wacA
+# AAAAAVswDQYJKoZIhvcNAQELBQAwfDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldh
+# c2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBD
+# b3Jwb3JhdGlvbjEmMCQGA1UEAxMdTWljcm9zb2Z0IFRpbWUtU3RhbXAgUENBIDIw
+# MTAwHhcNMjEwMTE0MTkwMjE2WhcNMjIwNDExMTkwMjE2WjCBzjELMAkGA1UEBhMC
 # VVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNV
-# BAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEmMCQGA1UEAxMdTWljcm9zb2Z0IFRp
-# bWUtU3RhbXAgUENBIDIwMTACEzMAAAFji2TGyYWWZXYAAAAAAWMwDQYJYIZIAWUD
-# BAIBBQCgggFKMBoGCSqGSIb3DQEJAzENBgsqhkiG9w0BCRABBDAvBgkqhkiG9w0B
-# CQQxIgQgkqDWE6cxTQHFv+j7hgNqsdLM/zQtAbcUUJ06lzhxULYwgfoGCyqGSIb3
-# DQEJEAIvMYHqMIHnMIHkMIG9BCCcWd2XHaFjoSikKbi4y9AYBIpLBy9Rb16ns1Gr
-# EfQjajCBmDCBgKR+MHwxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9u
-# MRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRp
-# b24xJjAkBgNVBAMTHU1pY3Jvc29mdCBUaW1lLVN0YW1wIFBDQSAyMDEwAhMzAAAB
-# Y4tkxsmFlmV2AAAAAAFjMCIEIKl/kjQC5obx90LrAQ5aCBcNCsU2pdEMmIQ0ZoOT
-# lh1oMA0GCSqGSIb3DQEBCwUABIIBABhyA+RVablOBcO/HOkCt7zunDpE4SOoSQ7K
-# iahWAxmoF9ofM8AEC2HVn6LCjP1WGYEZMzwbFW+AscJKZWfjSEH/XKZIJNl+gXR5
-# j18aBF/rAdrcJlxeVCTsCgXz59VZ0rK4r/G+Hw4gB3l+rGoe8ovtB7EPmct+xlr3
-# z9FkHuDKgr/4A32UFyKHr8Q44T7cdeb7T0LLR43gUxuihxQ7DCkoz8Ze26wzVHe0
-# 1IGJWpibyHLWi6xqdHALOPFJHg43ylGpZLqDrns7QojQskfefzuQDRtuVpBcgFmi
-# Q3EYIgjYby+iKYlWIzezifxRgT/2uI2P4PbpOdUgCV1G9InbeQA=
+# BAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEpMCcGA1UECxMgTWljcm9zb2Z0IE9w
+# ZXJhdGlvbnMgUHVlcnRvIFJpY28xJjAkBgNVBAsTHVRoYWxlcyBUU1MgRVNOOjBB
+# NTYtRTMyOS00RDREMSUwIwYDVQQDExxNaWNyb3NvZnQgVGltZS1TdGFtcCBTZXJ2
+# aWNlMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyCR/pez12qF6y6Yu
+# W2eXqXCOIPWOH4inP/qPmrkJDNKdtpW6jgqIKJKmvla2qpWUPudP/dZfpXq9yk1B
+# Xlx21VXBp82kuffIX59E2hRaHVD27xcaJJfxjNVLyrrwk8WJE7gczMyksJpKNx9B
+# kh3oKK6TItCu4qdIXB0aEzETsYJrJpDxkPIQ8ez8LbHgABgwWxU6yxJ1HyNvx/MB
+# 6TdI2Vm1Up3QpvyKj7deRDngy9RdX1xUvX94N1dVUEGo6EfOgmzL5zbL+zdb6ARf
+# xBv079uMGRHqEho7AQDDs27jT9MxV/BcnuDlH8c1cK3tzghqM03hb4K6B7Kwudhu
+# pGZb6QIDAQABo4IBGzCCARcwHQYDVR0OBBYEFGXnLTWIbbdTIF1Mf/XlOcmYuqsu
+# MB8GA1UdIwQYMBaAFNVjOlyKMZDzQ3t8RhvFM2hahW1VMFYGA1UdHwRPME0wS6BJ
+# oEeGRWh0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01p
+# Y1RpbVN0YVBDQV8yMDEwLTA3LTAxLmNybDBaBggrBgEFBQcBAQROMEwwSgYIKwYB
+# BQUHMAKGPmh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljVGlt
+# U3RhUENBXzIwMTAtMDctMDEuY3J0MAwGA1UdEwEB/wQCMAAwEwYDVR0lBAwwCgYI
+# KwYBBQUHAwgwDQYJKoZIhvcNAQELBQADggEBAKczazumExqZzhB1WiWs7VldGIMx
+# RV2C73/KryDuQhWX5+SVRXZWWi63r5+k6oAad7Ay3B6cW1qBWFUnwdq7w3CT4gCE
+# HQHTgOhs0PDu/goRMBF/wo3yBMfoHtGMeGt4wNaDuJxXQOyiPwwgDwCKtaXB/iev
+# ykofSfasROx4EkNZzd1tTQhMkQfVHMWEaRbsjM09AI7XrlOns0udeniZpnOhXHw/
+# KI407p/INmvTKpW6H06pYf589lhD9hgXKHHL6EdY66pilzzc+GfW8DQB7X5afhud
+# 7pkaM/FEjqzGwwiR0FcPQckvI3th9Kts5UBjCNhY4et6wZm6+gRoSANFZSswggZx
+# MIIEWaADAgECAgphCYEqAAAAAAACMA0GCSqGSIb3DQEBCwUAMIGIMQswCQYDVQQG
+# EwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwG
+# A1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMTIwMAYDVQQDEylNaWNyb3NvZnQg
+# Um9vdCBDZXJ0aWZpY2F0ZSBBdXRob3JpdHkgMjAxMDAeFw0xMDA3MDEyMTM2NTVa
+# Fw0yNTA3MDEyMTQ2NTVaMHwxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5n
+# dG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9y
+# YXRpb24xJjAkBgNVBAMTHU1pY3Jvc29mdCBUaW1lLVN0YW1wIFBDQSAyMDEwMIIB
+# IjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqR0NvHcRijog7PwTl/X6f2mU
+# a3RUENWlCgCChfvtfGhLLF/Fw+Vhwna3PmYrW/AVUycEMR9BGxqVHc4JE458YTBZ
+# sTBED/FgiIRUQwzXTbg4CLNC3ZOs1nMwVyaCo0UN0Or1R4HNvyRgMlhgRvJYR4Yy
+# hB50YWeRX4FUsc+TTJLBxKZd0WETbijGGvmGgLvfYfxGwScdJGcSchohiq9LZIlQ
+# YrFd/XcfPfBXday9ikJNQFHRD5wGPmd/9WbAA5ZEfu/QS/1u5ZrKsajyeioKMfDa
+# TgaRtogINeh4HLDpmc085y9Euqf03GS9pAHBIAmTeM38vMDJRF1eFpwBBU8iTQID
+# AQABo4IB5jCCAeIwEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFNVjOlyKMZDz
+# Q3t8RhvFM2hahW1VMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQE
+# AwIBhjAPBgNVHRMBAf8EBTADAQH/MB8GA1UdIwQYMBaAFNX2VsuP6KJcYmjRPZSQ
+# W9fOmhjEMFYGA1UdHwRPME0wS6BJoEeGRWh0dHA6Ly9jcmwubWljcm9zb2Z0LmNv
+# bS9wa2kvY3JsL3Byb2R1Y3RzL01pY1Jvb0NlckF1dF8yMDEwLTA2LTIzLmNybDBa
+# BggrBgEFBQcBAQROMEwwSgYIKwYBBQUHMAKGPmh0dHA6Ly93d3cubWljcm9zb2Z0
+# LmNvbS9wa2kvY2VydHMvTWljUm9vQ2VyQXV0XzIwMTAtMDYtMjMuY3J0MIGgBgNV
+# HSABAf8EgZUwgZIwgY8GCSsGAQQBgjcuAzCBgTA9BggrBgEFBQcCARYxaHR0cDov
+# L3d3dy5taWNyb3NvZnQuY29tL1BLSS9kb2NzL0NQUy9kZWZhdWx0Lmh0bTBABggr
+# BgEFBQcCAjA0HjIgHQBMAGUAZwBhAGwAXwBQAG8AbABpAGMAeQBfAFMAdABhAHQA
+# ZQBtAGUAbgB0AC4gHTANBgkqhkiG9w0BAQsFAAOCAgEAB+aIUQ3ixuCYP4FxAz2d
+# o6Ehb7Prpsz1Mb7PBeKp/vpXbRkws8LFZslq3/Xn8Hi9x6ieJeP5vO1rVFcIK1GC
+# RBL7uVOMzPRgEop2zEBAQZvcXBf/XPleFzWYJFZLdO9CEMivv3/Gf/I3fVo/HPKZ
+# eUqRUgCvOA8X9S95gWXZqbVr5MfO9sp6AG9LMEQkIjzP7QOllo9ZKby2/QThcJ8y
+# Sif9Va8v/rbljjO7Yl+a21dA6fHOmWaQjP9qYn/dxUoLkSbiOewZSnFjnXshbcOc
+# o6I8+n99lmqQeKZt0uGc+R38ONiU9MalCpaGpL2eGq4EQoO4tYCbIjggtSXlZOz3
+# 9L9+Y1klD3ouOVd2onGqBooPiRa6YacRy5rYDkeagMXQzafQ732D8OE7cQnfXXSY
+# Ighh2rBQHm+98eEA3+cxB6STOvdlR3jo+KhIq/fecn5ha293qYHLpwmsObvsxsvY
+# grRyzR30uIUBHoD7G4kqVDmyW9rIDVWZeodzOwjmmC3qjeAzLhIp9cAvVCch98is
+# TtoouLGp25ayp0Kiyc8ZQU3ghvkqmqMRZjDTu3QyS99je/WZii8bxyGvWbWu3EQ8
+# l1Bx16HSxVXjad5XwdHeMMD9zOZN+w2/XU/pnR4ZOC+8z1gFLu8NoFA12u8JJxzV
+# s341Hgi62jbb01+P3nSISRKhggLSMIICOwIBATCB/KGB1KSB0TCBzjELMAkGA1UE
+# BhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAc
+# BgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEpMCcGA1UECxMgTWljcm9zb2Z0
+# IE9wZXJhdGlvbnMgUHVlcnRvIFJpY28xJjAkBgNVBAsTHVRoYWxlcyBUU1MgRVNO
+# OjBBNTYtRTMyOS00RDREMSUwIwYDVQQDExxNaWNyb3NvZnQgVGltZS1TdGFtcCBT
+# ZXJ2aWNloiMKAQEwBwYFKw4DAhoDFQAKu0FupjLSv5gYu1RoVVFb9iHupqCBgzCB
+# gKR+MHwxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQH
+# EwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xJjAkBgNV
+# BAMTHU1pY3Jvc29mdCBUaW1lLVN0YW1wIFBDQSAyMDEwMA0GCSqGSIb3DQEBBQUA
+# AgUA5UBoWzAiGA8yMDIxMTExODA5NTEyM1oYDzIwMjExMTE5MDk1MTIzWjB3MD0G
+# CisGAQQBhFkKBAExLzAtMAoCBQDlQGhbAgEAMAoCAQACAhelAgH/MAcCAQACAhSd
+# MAoCBQDlQbnbAgEAMDYGCisGAQQBhFkKBAIxKDAmMAwGCisGAQQBhFkKAwKgCjAI
+# AgEAAgMHoSChCjAIAgEAAgMBhqAwDQYJKoZIhvcNAQEFBQADgYEAqYN95pA5Igi/
+# shtI9LCZBTDaQO+XU7FSMm1zfjenfoRLDuvNZ4enWW5djNsWTrcN5DGE5I536Jon
+# 5nlYH8MJcEMrMyp85R/Yo50/6KpYyGNFd2LPwDsHia/TTqHcr+nP95GpUA4h74Aa
+# Ut0CuNdHmxc5qhGEfBaTHET5TzPA4K0xggMNMIIDCQIBATCBkzB8MQswCQYDVQQG
+# EwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwG
+# A1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSYwJAYDVQQDEx1NaWNyb3NvZnQg
+# VGltZS1TdGFtcCBQQ0EgMjAxMAITMwAAAVt8sLo0ZzfBpwAAAAABWzANBglghkgB
+# ZQMEAgEFAKCCAUowGgYJKoZIhvcNAQkDMQ0GCyqGSIb3DQEJEAEEMC8GCSqGSIb3
+# DQEJBDEiBCCcPWXdt1y/cimY8TLODaMU8xjhwzRvtduVKu0kpx0zITCB+gYLKoZI
+# hvcNAQkQAi8xgeowgecwgeQwgb0EIMki4KkoYxGHiUIa5wY8cI0nuOr0xNt7eZDY
+# W1JksIUZMIGYMIGApH4wfDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0
+# b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3Jh
+# dGlvbjEmMCQGA1UEAxMdTWljcm9zb2Z0IFRpbWUtU3RhbXAgUENBIDIwMTACEzMA
+# AAFbfLC6NGc3wacAAAAAAVswIgQgMT278Ti39b2P8Bj5iQ/Psbm7XqitYXhtOplK
+# 60CjHrowDQYJKoZIhvcNAQELBQAEggEAIbuokxmSsJV+44cGLTOzSPunkfI5sA2b
+# gIiYgaVmqn/mnOn3fjiC2GeXYgUqg06d3ZMxZin86KHHf7IVsllNPbu0maz/pWV8
+# +M3HzBmCmEJgBsXJLjQMbUn1fCyUpC52NMhRlwG3yzJR42071+gHZ2Lpfu5SC2mC
+# rPu9jZeCqcNYhNqt5dEsQGP0h4Mlzp91gDTD264AlvhjwG918NrAbCbPPeGOG2Z1
+# gQq0l0cfkxru3hrSm9dkmAuUdZ8oC44ePjG4i9y6lS13M0pxgoY+kbUcqH7K5sD+
+# Fx5T95qI6Tal1JUCtuFk5jLKgmhfIL+MX+tPklAzl3cWi7E69fGmKQ==
 # SIG # End signature block
