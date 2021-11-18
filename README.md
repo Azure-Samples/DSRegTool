@@ -54,6 +54,8 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 - Testing the following with Federated domain:
     - Testing MEX endpoint (for Federated domains)
     - Testing windowstransport endpoints (for Federated domains)
+    - Testing device authentication (for ADFS)
+    - Testing device registration claim rules configuration (for ADFS)
     - If federated join flow failed, checking sync join flow
     - Testing OS version if it supports fallback to sync join
     - Testing fallback to sync join configuration enablement
