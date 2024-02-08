@@ -4,13 +4,13 @@ languages:
 - powershell
 products:
 - entra-id
-description: "DSRegTool PowerShell is a comprehensive tool that performs more than 50 different tests that help you to identify and fix the most common device registration issues for all join types (Hybrid Azure AD joined, Azure AD Joined and Azure AD Register)."
+description: "DSRegTool PowerShell is a comprehensive tool that performs more than 50 different tests that help you to identify and fix the most common device registration issues for all join types (Microsoft Entra hybrid join, Microsoft Entra join device and Microsoft Entra Register)."
 urlFragment: "DSRegTool"
 ---
 # Device Registration Troubleshooter Tool
 Coming from the fact that it is not so easy to troubleshoot device registration issues and it does take some time, but now, using Device Registration Troubleshooter tool it is not complex anymore :)
 
-DSRegTool PowerShell is a comprehensive tool that performs more than 50 different tests that helps you to identify and fix the most common device registration issues for all join types (Hybrid Azure AD joined, Azure AD Joined and Azure AD Register).
+DSRegTool PowerShell is a comprehensive tool that performs more than 50 different tests that helps you to identify and fix the most common device registration issues for all join types (Microsoft Entra hybrid join, Microsoft Entra join device and Microsoft Entra Register).
 
 ## Script requirements
 You can run DSRegTool as a normal user, except with option #3 and option #7 where you need to run DSRegTool with a user who has local admin permissions
@@ -22,7 +22,7 @@ Download and run the `DSRegTool.ps1` script from [this](https://github.com/Azure
 DSRegTool facilitates troubleshooting device registration issues for different join types
 
 ## What are tests DSRegTool perform?
-#### 1- Troubleshoot Azure AD Register
+#### 1- Troubleshoot Microsoft Entra Register
 - Testing OS version
 - Testing if the device is registered to AzureAD by the signed in user
 - Testing Device Registration endpoints connectivity
@@ -30,7 +30,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 - Testing if the device exists on AAD
 - Testing if the device is enabled on AAD 
 
-#### 2- Troubleshoot Azure AD Join device
+#### 2- Troubleshoot Microsoft Entra join device device
 - Testing OS version
 - Testing if the device joined to the local domain
 - Testing if the device is joined to AzureAD
@@ -41,7 +41,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 - Testing if the device exists on AAD.
 - Testing if the device is enabled on AAD 
 
-#### 3- Troubleshoot Hybrid Azure AD Join
+#### 3- Troubleshoot Microsoft Entra hybrid join
 - Testing OS version
 - Testing if the device joined to the local domain
 - Testing if the device is joined to AzureAD
@@ -63,7 +63,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
     - Testing if the device synced successfully to AAD (for Managed domains)
     - Testing userCertificate attribute under AD computer object
     - Testing self-signed certificate validity
-    - Testing if the device synced to Azure AD
+    - Testing if the device synced to Entra ID
 - Testing Device Registration Service
 - Test if the device exists on AAD.
 - Test if the device enabled on AAD.
@@ -81,7 +81,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 - Checks OS version
 - Checks if the device joined to the local domain
 - Checks if the device is joined to AzureAD
-- Checks if the device hybrid, Azure AD Join or Azure AD Register
+- Checks if the device hybrid, Entra ID Join or Microsoft Entra Register
 - Checks the device certificate configuration.
 - Checks if the device exists on AAD.
 - Checks if the device enabled on AAD.
@@ -92,9 +92,9 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 #### 6- Verify Primary Refresh Token (PRT)
 - Checks OS version
 - Checks if the device joined to the local domain
-- Testing if the device is Hybrid Azure AD joined
-- Testing if the device is Azure AD Joined
-- Testing Azure AD PRT (DJ++ or ADDJ)
+- Testing if the device is Microsoft Entra hybrid join
+- Testing if the device is Microsoft Entra join device
+- Testing Entra ID PRT (DJ++ or ADDJ)
 - Testing Enterprise PRT (DJ++)
 - Testing if the device is workplace joined
 - Testing the registry configuration (WPJ) 
