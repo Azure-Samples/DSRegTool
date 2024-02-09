@@ -10,7 +10,7 @@ urlFragment: "DSRegTool"
 # Device Registration Troubleshooter Tool
 Coming from the fact that it is not so easy to troubleshoot device registration issues and it does take some time, but now, using Device Registration Troubleshooter tool it is not complex anymore :)
 
-DSRegTool PowerShell is a comprehensive tool that performs more than 50 different tests that helps you to identify and fix the most common device registration issues for all join types (Microsoft Entra hybrid join, Microsoft Entra join device and Microsoft Entra Register).
+DSRegTool PowerShell is a comprehensive tool that performs more than 50 different tests that helps you to identify and fix the most common device registration issues for all join types (Microsoft Entra hybrid join, Microsoft Entra join and Microsoft Entra Register).
 
 ## Script requirements
 You can run DSRegTool as a normal user, except with option #3 and option #7 where you need to run DSRegTool with a user who has local admin permissions
