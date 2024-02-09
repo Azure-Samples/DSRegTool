@@ -4,7 +4,7 @@ languages:
 - powershell
 products:
 - entra-id
-description: "DSRegTool PowerShell is a comprehensive tool that performs more than 50 different tests that help you to identify and fix the most common device registration issues for all join types (Microsoft Entra hybrid join, Microsoft Entra join device and Microsoft Entra Register)."
+description: "DSRegTool PowerShell is a comprehensive tool that performs more than 50 different tests that help you to identify and fix the most common device registration issues for all join types (Microsoft Entra hybrid join, Microsoft Entra join and Microsoft Entra Register)."
 urlFragment: "DSRegTool"
 ---
 # Device Registration Troubleshooter Tool
