@@ -24,7 +24,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 ## What are tests DSRegTool perform?
 #### 1- Troubleshoot Microsoft Entra Register
 - Testing OS version
-- Testing if the device is registered to AzureAD by the signed in user
+- Testing if the device is registered to Entra ID by the signed in user
 - Testing Device Registration endpoints connectivity
 - Testing Device Registration Service
 - Testing if the device exists on AAD
@@ -33,7 +33,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 #### 2- Troubleshoot Microsoft Entra join device device
 - Testing OS version
 - Testing if the device joined to the local domain
-- Testing if the device is joined to AzureAD
+- Testing if the device is joined to Entra ID
 - Testing if you signed in user is a Built-in Administrator account
 - Testing if the signed in user has local admin permissions
 - Testing Device Registration endpoints connectivity
@@ -44,7 +44,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 #### 3- Troubleshoot Microsoft Entra hybrid join
 - Testing OS version
 - Testing if the device joined to the local domain
-- Testing if the device is joined to AzureAD
+- Testing if the device is joined to Entra ID
 - Testing Automatic-Device-Join task scheduler
 - Testing Domain Controller connectivity
 - Testing Service Connection Point (SCP) configuration for both client and domain sides
@@ -80,7 +80,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 #### 5- Verify the health status of the device
 - Checks OS version
 - Checks if the device joined to the local domain
-- Checks if the device is joined to AzureAD
+- Checks if the device is joined to Entra ID
 - Checks if the device hybrid, Entra ID Join or Microsoft Entra Register
 - Checks the device certificate configuration.
 - Checks if the device exists on AAD.
