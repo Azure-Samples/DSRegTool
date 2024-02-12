@@ -27,8 +27,8 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 - Testing if the device is registered to Entra ID by the signed in user
 - Testing Device Registration endpoints connectivity
 - Testing Device Registration Service
-- Testing if the device exists on AAD
-- Testing if the device is enabled on AAD 
+- Testing if the device exists on Entra ID
+- Testing if the device is enabled on Entra ID 
 
 #### 2- Troubleshoot Microsoft Entra join device device
 - Testing OS version
@@ -38,8 +38,8 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 - Testing if the signed in user has local admin permissions
 - Testing Device Registration endpoints connectivity
 - Testing Device Registration Service
-- Testing if the device exists on AAD.
-- Testing if the device is enabled on AAD 
+- Testing if the device exists on Entra ID
+- Testing if the device is enabled on Entra ID 
 
 #### 3- Troubleshoot Microsoft Entra hybrid join
 - Testing OS version
@@ -60,14 +60,14 @@ DSRegTool facilitates troubleshooting device registration issues for different j
     - Testing OS version if it supports fallback to sync join
     - Testing fallback to sync join configuration enablement
 - Testing the following with Managed domain / Sync join flow:
-    - Testing if the device synced successfully to AAD (for Managed domains)
+    - Testing if the device synced successfully to Entra ID (for Managed domains)
     - Testing userCertificate attribute under AD computer object
     - Testing self-signed certificate validity
     - Testing if the device synced to Entra ID
 - Testing Device Registration Service
-- Test if the device exists on AAD.
-- Test if the device enabled on AAD.
-- Test if the device is not pending on AAD.
+- Test if the device exists on Entra ID
+- Test if the device enabled on Entra ID
+- Test if the device is not pending on Entra ID
 - Testing if device is stale
 
 #### 4- Verify Service Connection Point (SCP)
@@ -83,9 +83,9 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 - Checks if the device is joined to Entra ID
 - Checks if the device hybrid, Entra ID Join or Microsoft Entra Register
 - Checks the device certificate configuration.
-- Checks if the device exists on AAD.
-- Checks if the device enabled on AAD.
-- Checks if the device is not pending on AAD
+- Checks if the device exists on Entra ID
+- Checks if the device enabled on Entra ID
+- Checks if the device is not pending on Entra ID
 - Shows the health status for the device
 - Provides recommendations to fix unhealthy devices 
 
