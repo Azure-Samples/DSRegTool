@@ -110,7 +110,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 No, It just retrieves data.
 
 ### Does the script require any PowerShell module to be installed?
-No, the script does not require any PowerShell module.
+No, the script doesn't require any PowerShell module.
 
 ### Will the tool fix the issue when it detects it?
 No, it identifies the issue and suggest recommended steps to fix it.
